@@ -57,7 +57,7 @@ streamlit run app.py
 ## If something breaks
 
 - "No Gemini API key found": the secret was not saved. Re-open Settings, then Secrets, and paste it again.
-- A model not found error: Google may have renamed the model. Add `GEMINI_MODEL = "gemini-2.5-flash"` to the secrets, replacing the name with a current one listed in Google AI Studio.
+- A model not found error: Google may have renamed the model. Add `GEMINI_MODEL = "gemini-3.8-flash"` to the secrets, replacing the name with a current one listed in Google AI Studio. The error message from Google usually names the model it wants you to use.
 - A quota or rate limit error: wait a minute and run it again. The free tier has limits.
 - The Judge returns a format error: click "Run the debate" again.
 

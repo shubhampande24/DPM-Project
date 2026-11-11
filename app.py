@@ -34,7 +34,7 @@ def get_setting(name, default=None):
 
 API_KEY = get_setting("GEMINI_API_KEY")
 # Change the model name in Streamlit secrets (GEMINI_MODEL) if Google retires this one.
-MODEL_NAME = get_setting("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL_NAME = get_setting("GEMINI_MODEL", "gemini-3.8-flash")
 
 MAX_FIELD_CHARS = 1500  # keeps cost and response time under control
 
