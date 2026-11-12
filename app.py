@@ -34,7 +34,11 @@ def get_setting(name, default=None):
 
 API_KEY = get_setting("GEMINI_API_KEY")
 # Change the model name in Streamlit secrets (GEMINI_MODEL) if Google retires this one.
-MODEL_NAME = get_setting("GEMINI_MODEL", "gemini-3.8-flash")
+MODEL_NAME = get_setting("GEMINI_MODEL", "gemini-3.6-flash")
+# If the main model is overloaded (503), the app tries these in order.
+FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]
+MODEL_CHAIN = [MODEL_NAME] + [m for m in FALLBACK_MODELS if m != MODEL_NAME]
+REQUEST_TIMEOUT_MS = 60_000  # never hang longer than 60 seconds per request
 
 MAX_FIELD_CHARS = 1500  # keeps cost and response time under control
 
@@ -114,11 +118,14 @@ Rules:
 
 @st.cache_resource
 def get_client(api_key):
-    return genai.Client(api_key=api_key)
+    return genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS),
+    )
 
 
 def call_llm(system_prompt, user_text, json_mode=False, temperature=0.7):
-    """Call Gemini with one retry. Raises a readable error if both attempts fail."""
+    """Call Gemini. Retries with backoff on overload, then falls back to other models."""
     client = get_client(API_KEY)
     config = types.GenerateContentConfig(
         system_instruction=system_prompt,
@@ -126,18 +133,29 @@ def call_llm(system_prompt, user_text, json_mode=False, temperature=0.7):
         response_mime_type="application/json" if json_mode else "text/plain",
     )
     last_error = None
-    for attempt in range(2):
-        try:
-            response = client.models.generate_content(
-                model=MODEL_NAME, contents=user_text, config=config
-            )
-            if response.text:
-                return response.text
-            last_error = "The model returned an empty answer."
-        except Exception as exc:  # network, quota, bad key, model name
-            last_error = str(exc)
-        time.sleep(2)
-    raise RuntimeError(last_error)
+    for model in MODEL_CHAIN:
+        for attempt in range(3):  # waits: 2s, 5s between tries
+            try:
+                response = client.models.generate_content(
+                    model=model, contents=user_text, config=config
+                )
+                if response.text:
+                    st.session_state["model_used"] = model
+                    return response.text
+                last_error = "The model returned an empty answer."
+            except Exception as exc:
+                last_error = str(exc)
+                msg = last_error.lower()
+                if "404" in msg or "not found" in msg:
+                    break  # wrong model name: skip to the next model
+                if "api key" in msg or "401" in msg or "403" in msg:
+                    raise RuntimeError(last_error)  # retrying will not help
+            if attempt < 2:
+                time.sleep(2 + attempt * 3)
+    raise RuntimeError(
+        "All Gemini models are busy or unavailable right now. "
+        "Please try again in a few minutes. Last error: " + str(last_error)
+    )
 
 
 def parse_judge_json(raw):
