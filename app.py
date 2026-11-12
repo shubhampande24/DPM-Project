@@ -47,8 +47,11 @@ hundreds of startups fail. Your job is to find hidden risks in the pitch, with a
 focus on unit economics and execution.
 
 Rules:
-- Use only the facts in the pitch. Never invent numbers. If an important number is
+- Use only the facts in the pitch. Never invent numbers, and never quote industry
+  statistics or benchmarks that are not in the pitch. If an important number is
   missing, call that out as a gap.
+- If the pitch does not make clear how a figure is defined (for example whether a
+  margin already includes delivery cost), say that it is unclear. Do not assume.
 - List exactly 5 risks, numbered R1 to R5.
 - For each risk give: a short title, the category (Unit economics, Execution, or
   Market), why it could kill the business, and the specific number or evidence that
@@ -62,8 +65,10 @@ pitch. Your job is to respond to each one fairly.
 
 Rules:
 - Answer each risk by its number (R1 to R5).
-- For each, say what the strongest honest defense is, and what the founder could do
-  to reduce the risk. If the risk is valid and cannot be defended, say so plainly.
+- Open each answer with the strongest defense the pitch supports, then say what the
+  founder could do to reduce the risk.
+- Concede only the part that truly cannot be defended, and say what evidence would
+  change your mind. Do not simply agree with the Skeptic.
 - Use only the facts in the pitch. Never invent numbers or customer evidence.
 - Keep the whole answer under 350 words."""
 
@@ -96,6 +101,10 @@ Return ONLY valid JSON with exactly this structure:
 Rules:
 - Rank risks from most to least serious (rank 1 is the most serious). Include all 5.
 - Do not invent numbers. Base every claim on the pitch or the two agents' text.
+- Merge overlapping risks so that the 5 risks are distinct from each other.
+- If something is not stated in the pitch, write "not stated in the pitch". Do not say
+  it is absent or false.
+- Start any sentence that relies on an assumption with "Assumption:".
 - Plain, human language. Do not use em dashes."""
 
 # ----------------------------------------------------------------------------
@@ -220,8 +229,10 @@ with st.sidebar:
     )
     st.header("Privacy")
     st.markdown(
-        "Nothing is saved by this app. Your text is sent to the Gemini API to "
-        "generate the analysis. Do not enter confidential, personal or financial "
+        "This app does not store anything. Your text is sent to the Google Gemini "
+        "API to generate the analysis. On the free tier, Google's terms say "
+        "submitted content may be used to improve its products and may be read "
+        "by human reviewers. Do not enter confidential, personal or financial "
         "account information."
     )
     st.warning("AI analysis can be wrong. Use it to find questions to test, not as investment advice.")
